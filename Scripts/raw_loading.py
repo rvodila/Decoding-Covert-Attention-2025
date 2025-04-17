@@ -68,7 +68,7 @@ for i_subject, subject in enumerate(subjects):
 
     # Loop through runs for the 'covert' task
     for i_run, run in enumerate(runs.get(task, [])):  # Use .get() to handle missing task gracefully
-        print(f"\t\tRun: {run}")
+        print(f"\t\tRun: {run}") 
 
         # Run XDF file name
         fn = os.path.join(sourcedata_dir, f"sub-{subject}", "ses-S001", "eeg",

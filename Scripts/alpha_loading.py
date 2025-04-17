@@ -78,12 +78,6 @@ subjects_channel_reject = {'VPpdia': ['POz', 'P2'],
                             'VPpdizc': ['P1', 'PO3', 'POz', 'Pz', 'P2', 'FC2']}
 
 # Define sub-set of electrodes
-picks_hubner = [
-    "F7", "F3", "Fz", "F4", "F8", "FC1", "FC2", "FC5", "FC6", "FCz", "T7", "C3",
-    "Cz", "C4", "T8", "CP1", "CP2", "CP5", "CP6", 'CPz',
-    "P7", "P3", "Pz", "P4", "P8", "Oz", "O1", "O2"
-]
-
 
 bandpass = [0.5, 30]  # bandpass with low and high cutoff in Hz
 tmin = -1  # trial start in seconds
@@ -184,10 +178,10 @@ for i_subject, subject in enumerate(subjects):
             # ICA REJECTION
 
             # Apply ICA, stay in ICA space
-            raw = ica.get_sources(raw)
+            #raw = ica.get_sources(raw)
             # flag and remove components
-            ic_names = [raw.ch_names[idx] for idx in ica.exclude]
-            raw.drop_channels(ic_names)
+            #ic_names = [raw.ch_names[idx] for idx in ica.exclude]
+            #raw.drop_channels(ic_names)
             #print(f'pre-ica rank: {mne.compute_rank(raw)}')
             #raw = ica.apply(raw)
             #print(f'post-ica rank: {mne.compute_rank(raw)}')
@@ -235,4 +229,4 @@ for i_subject, subject in enumerate(subjects):
         save_dir = os.path.join(derivatives_dir, "preprocessed", "alpha", f"sub-{subject}")
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        np.savez(os.path.join(save_dir, f"sub-{subject}_task-{task}_alpha_64_icaspace.npz"), X=X, y=y, z=z, V=V, fs=fs)
+        np.savez(os.path.join(save_dir, f"sub-{subject}_task-{task}_alpha_64_noica.npz"), X=X, y=y, z=z, V=V, fs=fs)

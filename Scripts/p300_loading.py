@@ -187,7 +187,7 @@ for subject in subjects:
             # Apply ICA
             
             #print(f'pre-ica rank: {mne.compute_rank(raw)}')
-            raw = ica.apply(raw)
+            #raw = ica.apply(raw)
             #raw = ica.get_sources(raw)
             # flag and remove components
             #ic_names = [raw.ch_names[idx] for idx in ica.exclude]
@@ -236,4 +236,4 @@ for subject in subjects:
         save_dir = os.path.join(derivatives_dir, "preprocessed", "p300", f"sub-{subject}")
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        np.savez(os.path.join(save_dir, f"sub-{subject}_task-{task}_p300_64_nativespace.npz"), X=X, y=y, z=z, V=V, fs=fs)
+        np.savez(os.path.join(save_dir, f"sub-{subject}_task-{task}_p300_64_noica.npz"), X=X, y=y, z=z, V=V, fs=fs)
