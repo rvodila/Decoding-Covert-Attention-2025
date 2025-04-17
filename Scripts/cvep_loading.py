@@ -57,7 +57,7 @@ montage = mne.channels.read_custom_montage(loc_file)
 
 fs = 120  # target EEG (down)sampling frequency in Hz
 pr = 60  # stimulus presentation rate in Hz
-bandpass = [1, 30]  # bandpass with low and high cutoff in Hz
+bandpass = [6, 30]  # bandpass with low and high cutoff in Hz
 tmin = 0  # trial start in seconds
 tmax = 20  # trial duration in seconds
 
@@ -135,10 +135,11 @@ for i_subject, subject in enumerate(subjects):
             raw.set_montage(montage)
 
             # Read events
+       
             raw._data[0, :] -= np.median(raw._data[0, :])
-            raw._data[0, :] = raw._data[0, :] > 0
-            raw._data[0, :] = np.logical_and(raw._data[0, :], np.roll(raw._data[0, :], -1))
+            raw._data[0, :] = np.diff(np.concatenate((np.zeros(1), raw._data[0, :]))) > 0
             events = mne.find_events(raw, stim_channel="Trig1", verbose=False)
+
             
             if events.shape[0] > 0:
                 events = events[np.concatenate(([0], np.where(np.diff(events[:, 0]) > raw.info["sfreq"])[0] + 1)), :]

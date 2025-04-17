@@ -85,9 +85,9 @@ picks_hubner = [
 ]
 
 
-bandpass = (0.5, 30)  # bandpass with low and high cutoff in Hz
-tmin = -0.5  # trial start in seconds
-tmax = 20.5  # trial duration in seconds
+bandpass = [0.5, 30]  # bandpass with low and high cutoff in Hz
+tmin = -1  # trial start in seconds
+tmax = 21  # trial duration in seconds
 
 
 # Loop subjects
@@ -133,20 +133,22 @@ for i_subject, subject in enumerate(subjects):
             fn = os.path.join(sourcedata_dir, f"sub-{subject}", "ses-S001", "eeg",
                               f"sub-{subject}_ses-S001_task-{task}_run-{run}_eeg.xdf")
 
-            # Read EEG
+            # Read EEG data
             streams = pyxdf.resolve_streams(fn)
             names = [stream["name"] for stream in streams]
             stream_id = streams[names.index("BioSemi")]["stream_id"]
             raw = read_raw(fn, stream_ids=[stream_id], verbose=False)
+
+            # Rename channels and set montage
             raw.rename_channels(channel_dict)
             raw.set_montage(montage)
-            
+
             # De-meaning
             raw._data[0, :] -= np.median(raw._data[0, :])
-            raw._data[0, :] = raw._data[0, :] > 0
-            raw._data[0, :] = np.logical_and(raw._data[0, :], np.roll(raw._data[0, :], -1))
+            raw._data[0, :] = np.diff(np.concatenate((np.zeros(1), raw._data[0, :]))) > 0
             events = mne.find_events(raw, stim_channel="Trig1", verbose=False)
 
+            # Handle cases where no hardware events are found
             if events.shape[0] > 0:
                 events = events[np.concatenate(([0], np.where(np.diff(events[:, 0]) > raw.info["sfreq"])[0] + 1)), :]
             else:

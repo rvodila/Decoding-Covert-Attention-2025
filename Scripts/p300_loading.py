@@ -87,18 +87,12 @@ subjects_channel_reject = {'VPpdia': ['POz', 'P2'],
                             'VPpdiza': ['PO4'], 'VPpdizb': ['Fz'], 
                             'VPpdizc': ['P1', 'PO3', 'POz', 'Pz', 'P2', 'FC2']}
 
-# Define sub-set of electrodes
-picks_hubner = [
-    "F7", "F3", "Fz", "F4", "F8", "FC1", "FC2", "FC5", "FC6", "FCz", "T7", "C3",
-    "Cz", "C4", "T8", "CP1", "CP2", "CP5", "CP6", 'CPz',
-    "P7", "P3", "Pz", "P4", "P8", "Oz", "O1", "O2"
-]
 
 fs = 120  # target EEG (down)sampling frequency in Hz
 
-bandpass = (0.5, 8)  # bandpass with low and high cutoff in Hz
-tmin = -0.5  # trial start in seconds
-tmax = 20.5  # trial duration in seconds
+bandpass = [0.5, 8]  # bandpass with low and high cutoff in Hz
+tmin = -1  # trial start in seconds
+tmax = 21  # trial duration in seconds
 
 # Loop through each subject
 for subject in subjects:
@@ -152,10 +146,7 @@ for subject in subjects:
 
             # De-meaning
             raw._data[0, :] -= np.median(raw._data[0, :])
-            raw._data[0, :] = raw._data[0, :] > 0
-            raw._data[0, :] = np.logical_and(raw._data[0, :], np.roll(raw._data[0, :], -1))
-
-            # Find events in the trigger channel
+            raw._data[0, :] = np.diff(np.concatenate((np.zeros(1), raw._data[0, :]))) > 0
             events = mne.find_events(raw, stim_channel="Trig1", verbose=False)
 
             # Handle cases where no hardware events are found
@@ -191,8 +182,8 @@ for subject in subjects:
                 if channels_to_drop:
                     raw.drop_channels(channels_to_drop)
 
-            # ICA REJECTION
-
+           
+            
             # Apply ICA
             
             #print(f'pre-ica rank: {mne.compute_rank(raw)}')
@@ -206,7 +197,7 @@ for subject in subjects:
             raw.filter(l_freq=bandpass[0], h_freq=bandpass[1], verbose=False)
 
             # Set CAR afterwards so unused channels don't contaminate
-            #raw.set_eeg_reference(ref_channels='average', projection=False, verbose=None)
+            raw.set_eeg_reference(ref_channels='average', projection=False, verbose=None)  
             
             epo = mne.Epochs(raw, events=events, tmin=tmin, tmax=tmax, baseline=None,
                              preload=True, verbose=False)
@@ -240,7 +231,7 @@ for subject in subjects:
         X = np.concatenate(X, axis=0).astype("float32")
         y = np.concatenate(y, axis=0).astype("uint8")
         z = np.concatenate(z, axis=0).astype("uint8")
-
+        print(X.shape)
         # Save processed data
         save_dir = os.path.join(derivatives_dir, "preprocessed", "p300", f"sub-{subject}")
         if not os.path.exists(save_dir):
