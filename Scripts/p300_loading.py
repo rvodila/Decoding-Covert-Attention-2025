@@ -97,8 +97,8 @@ picks_hubner = [
 fs = 120  # target EEG (down)sampling frequency in Hz
 
 bandpass = (0.5, 8)  # bandpass with low and high cutoff in Hz
-tmin = -1  # trial start in seconds
-tmax = 21  # trial duration in seconds
+tmin = -0.5  # trial start in seconds
+tmax = 20.5  # trial duration in seconds
 
 # Loop through each subject
 for subject in subjects:
@@ -159,20 +159,25 @@ for subject in subjects:
             events = mne.find_events(raw, stim_channel="Trig1", verbose=False)
 
             # Handle cases where no hardware events are found
-            if events.shape[0] == 0:
-                print(f"\t\tNo events found in trigger channel. Falling back to marker stream.")
+            if events.shape[0] > 0:
+                events = events[np.concatenate(([0], np.where(np.diff(events[:, 0]) > raw.info["sfreq"])[0] + 1)), :]
+            else:
+                # Repair missing hardware markers with LSL
+                print(f"\t\tFound {events.shape[0]:d} events in trigger channel.")
                 streams = pyxdf.load_xdf(fn)[0]
                 names = [stream["info"]["name"][0] for stream in streams]
 
                 stream = streams[names.index("KeyboardMarkerStream")]
-                t_mrk = [t for t, mrk in zip(stream["time_stamps"], stream["time_series"])
-                         if mrk[2] == "start_stimulus"]
+                t_mrk = np.array([t for t, mrk in zip(stream["time_stamps"], stream["time_series"])
+                                  if mrk[2] == "start_stimulus"])
 
                 stream = streams[names.index("BioSemi")]
                 t_eeg = stream["time_stamps"]
 
                 events = np.zeros((len(t_mrk), 3), dtype=events.dtype)
-                events[:, 0] = np.array([np.argmin(np.abs(t_eeg - t)) for t in t_mrk])
+                lsl_delay = 16
+                events[:, 0] = np.argmin(np.abs(t_eeg[:, None] - t_mrk[None, :]), axis=0) + lsl_delay
+                print(f"\t\tFound {events.shape[0]:d} events in marker stream.")
 
             # pick sub-set (Huebner)
             raw.pick(all_channels)
@@ -192,6 +197,10 @@ for subject in subjects:
             
             #print(f'pre-ica rank: {mne.compute_rank(raw)}')
             raw = ica.apply(raw)
+            #raw = ica.get_sources(raw)
+            # flag and remove components
+            #ic_names = [raw.ch_names[idx] for idx in ica.exclude]
+            #raw.drop_channels(ic_names)
             #print(f'post-ica rank: {mne.compute_rank(raw)}')
             # Spectral bandpass filter
             raw.filter(l_freq=bandpass[0], h_freq=bandpass[1], verbose=False)
@@ -204,23 +213,26 @@ for subject in subjects:
             # Resampling
             epo = epo.resample(sfreq=fs, verbose=False)
 
-            # Extract data, labels, and targets
-            X.append(epo.get_data())
+            # Read labels
             streams = pyxdf.load_xdf(fn)[0]
             names = [stream["info"]["name"][0] for stream in streams]
             marker_stream = streams[names.index("KeyboardMarkerStream")]
-
-            cued_side = np.array([marker[3].lower().strip('""') == "right"
-                                  for marker in marker_stream["time_series"]
-                                  if marker[2] == "cued_side"])
-            left_target = np.array([x[3].split(";")[0].split("=")[1] == "hour_glass"
-                                    for x in marker_stream["time_series"]
-                                    if x[2] == "left_shape_stim"]).reshape((cued_side.size, -1))
-            right_target = np.array([x[3].split(";")[0].split("=")[1] == "hour_glass"
-                                     for x in marker_stream["time_series"]
-                                     if x[2] == "right_shape_stim"]).reshape((cued_side.size, -1))
-
+            cued_side = np.array([
+                marker[3].lower().strip('""') == "right"
+                for marker in marker_stream["time_series"]
+                if marker[2] == "cued_side"])
+            left_target = np.array([
+                x[3].split(";")[0].split("=")[1] == "hour_glass"
+                for x in marker_stream["time_series"]
+                if x[2] == "left_shape_stim"]).reshape((cued_side.size, -1))
+            right_target = np.array([
+                x[3].split(";")[0].split("=")[1] == "hour_glass"
+                for x in marker_stream["time_series"]
+                if x[2] == "right_shape_stim"]).reshape((cued_side.size, -1))
             targets = np.stack((left_target, right_target), axis=2)
+
+            # Extract data
+            X.append(epo.get_data(tmin=tmin, tmax=tmax, copy=True, verbose=False))
             y.append(cued_side)
             z.append(targets)
 
@@ -233,4 +245,4 @@ for subject in subjects:
         save_dir = os.path.join(derivatives_dir, "preprocessed", "p300", f"sub-{subject}")
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        np.savez(os.path.join(save_dir, f"sub-{subject}_task-{task}_p300_64.npz"), X=X, y=y, z=z, V=V, fs=fs)
+        np.savez(os.path.join(save_dir, f"sub-{subject}_task-{task}_p300_64_nativespace.npz"), X=X, y=y, z=z, V=V, fs=fs)
