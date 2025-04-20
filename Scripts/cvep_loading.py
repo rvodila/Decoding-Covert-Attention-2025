@@ -174,10 +174,10 @@ for i_subject, subject in enumerate(subjects):
 
             # ICA REJECTION
             #Stay in ICA Space
-            raw = ica.get_sources(raw)
-            # flag and remove components
-            ic_names = [raw.ch_names[idx] for idx in ica.exclude]
-            raw.drop_channels(ic_names)
+            #raw = ica.get_sources(raw)
+            ## flag and remove components
+            #ic_names = [raw.ch_names[idx] for idx in ica.exclude]
+            #raw.drop_channels(ic_names)
             
 
             #print(f'pre-ica rank: {mne.compute_rank(raw)}')
@@ -237,4 +237,4 @@ for i_subject, subject in enumerate(subjects):
         save_dir = os.path.join(derivatives_dir, "preprocessed", "cvep", f"sub-{subject}")
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        np.savez(os.path.join(save_dir, f"sub-{subject}_task-{task}_cvep_64_icaspace.npz"), X=X, y=y, z=z, V=V, fs=fs)
+        np.savez(os.path.join(save_dir, f"sub-{subject}_task-{task}_cvep_64_noica.npz"), X=X, y=y, z=z, V=V, fs=fs)
