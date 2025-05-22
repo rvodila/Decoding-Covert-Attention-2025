@@ -1,136 +1,172 @@
-
-# Decoding Lateral Attention Shifts in a Fixed-Gaze Task Using three strategies
+````markdown
+# Decoding Lateral Attention Shifts in a Fixed-Gaze Task Using Three Strategies
 
 ## Abstract
-A brain–computer interface (BCI) speller typically relies on gaze fixation, which excludes users with impaired oculomotor control, like people living with late-stage amyotrophic lateral sclerosis. We present the first step toward a gaze-independent BCI using the code-modulated visual evoked potential (c-VEP). In our study, participants fixated centrally while covertly attending to one of two bilaterally presented, pseudo-randomly flashing stimuli. From the recorded electroencephalography, we independently analyzed three neural signatures of covert visuospatial attention: (1) the c-VEP, (2) occipital alpha-band lateralization, and (3) the P300 response. From these neural signals, we achieved a grand average classification accuracy of 67\,\% (c-VEP), 88\,\% (alpha), and 98\,\% (P300). This demonstrates the viability of covert spatial attention as a control signal for gaze-independent c-VEP BCIs. 
+A gaze-independent brain–computer interface (BCI) speller could benefit individuals with impaired oculomotor control. We present the first step toward a gaze-independent BCI using the code-modulated visual evoked potential (c-VEP). Participants fixated centrally while covertly attending to one of two bilaterally presented, pseudo-randomly flashing stimuli. We benchmarked three neural signatures of covert spatial attention:
 
-This project decodes lateral attention shifts using three standalone, but complementory methodologies:
+1. **c-VEP**: template-matching via reconvolution CCA  
+2. **Alpha-band lateralization**: common spatial patterns on 8–13 Hz envelopes  
+3. **P300 ERP**: block-Toeplitz LDA on time-locked epochs  
 
-1. **code-modulated VIsual Evoked Potential (c-VEP)**  
-   Decoding is performed using template-matching the alpha band envelope.
-2. **Alpha-Band lateralization (alpha)**  
-   Decoding is performed using lateralization in the alpha band envelope.
-3. **P300 component Event-related Potential**  
-   Decoding is based on time-locked responses to target stimuli (i.e., the P300 ERP component).
+Grand-average accuracies reached 67 % (c-VEP), 88 % (alpha) and 98 % (P300), demonstrating covert attention as a viable control signal for gaze-independent c-VEP BCIs.
 
 ---
 
-## Noisy Participant Channel Rejection
+## 1. Noisy-Channel Rejection
+Certain electrodes were discarded per subject due to irreparable noise.  
 
-    Certain EEG channels were rejected due to irreparable noise. 
-    Please refer to the rejection map for details on noise patterns of the remaining channels.
+```python
+subjects_channel_reject = {
+  'VPpdia': ['POz','P2'],
+  'VPpdib': ['P2','FC1','CP2'],
+  'VPpdic': ['P2'],
+  'VPpdid': ['P2'],
+  'VPpdie': ['P2'],
+  'VPpdif': ['P2','POz'],
+  'VPpdig': ['P2'],
+  'VPpdih': ['P2','C3'],
+  'VPpdii': ['P2'],
+  'VPpdij': ['P2','P10'],
+  'VPpdik': ['P2'],
+  'VPpdil': ['P2'],
+  'VPpdim': [],
+  'VPpdin': ['P2','POz'],
+  'VPpdio': [],
+  'VPpdip': [],
+  'VPpdiq': [],
+  'VPpdir': [],
+  'VPpdis': [],
+  'VPpdit': [],
+  'VPpdiu': ['P2'],
+  'VPpdiv': ['P2','PO4','P1','PO3'],
+  'VPpdiw': ['P1','P3','POz','Pz','CPz'],
+  'VPpdix': [],
+  'VPpdiy': [],
+  'VPpdiz': ['P1','PO3'],
+  'VPpdiza': ['PO4'],
+  'VPpdizb': ['Fz'],
+  'VPpdizc': ['P1','PO3','POz','Pz','P2','FC2']
+}
+````
 
+* See **analysis/raw/Rejection Map/** for topographies and PSDs.
+* Timeseries and PSDs are in **analysis/raw/timeseries/** and **analysis/raw/psd/**.
 
-    subjects_channel_reject = {'VPpdia': ['POz', 'P2'],
-                            'VPpdib': ['P2', 'FC1', 'CP2'],
-                            'VPpdic': ['P2'], 
-                            'VPpdid': ['P2'], 'VPpdie': ['P2'], 
-                            'VPpdif': ['P2', 'POz'], 'VPpdig': ['P2'], 
-                            'VPpdih': ['P2', 'C3'], 
-                            'VPpdii': ['P2'], 
-                            'VPpdij': ['P2', 'P10'], 
-                            'VPpdik': ['P2'], 
-                            'VPpdil': ['P2'], 
-                            'VPpdim': [], 'VPpdin': ['P2', 'POz'], 
-                            'VPpdio': [], 'VPpdip': [], 'VPpdiq': [], 
-                            'VPpdir': [], 'VPpdis': [], 'VPpdit': [], 
-                            'VPpdiu': ['P2'], 'VPpdiv': ['P2', 'PO4', 'P1', 'PO3'], 
-                            'VPpdiw': ['P1', 'P3', 'POz', 'Pz', 'CPz'], 
-                            'VPpdix': [], 'VPpdiy': [], 'VPpdiz': ['P1', 'PO3'], 
-                            'VPpdiza': ['PO4'], 'VPpdizb': ['Fz'], 
-                            'VPpdizc': ['P1', 'PO3', 'POz', 'Pz', 'P2', 'FC2']}
-                            
-    Snapshots and PSD Plots:
-    You can find broadband time series, ERP-bandpass filtered series, and power spectral density (PSD) plots 
-    for each channel per participant in the following folder structure:
+---
 
-    analysis/
-    ├── raw/
-        ├── timeseries/**
-        ├── psd/**
-        └── Rejection Map/**
+## 2. Data Loading & Preprocessing
 
-    ERP Visualization:
-    Visualize ERP features using the P300 Visualization Notebook.
+1. **Load** raw XDF
+2. **Reject** bad channels (per subject)
+3. **Filter**
 
+   * c-VEP: 6–30 Hz
+   * Alpha: 0.5–30 Hz
+   * P300: 0.5–8 Hz
+4. **Epoch** around stimulation
+5. **Downsample** 500 Hz → 120 Hz
 
-## Data Loading and Preprocessing
+---
 
-    The following preprocessing steps are executed in the loading script:
+## 3. Experiment Structure
 
-    1. Load Raw XDF File
-    2. Remove Bad Channels (per participant)
-    3. Apply Band-Pass Filtering:
-        Alpha Pipeline: [0.5, 30] Hz
-        P300 Pipeline: [0.5, 8] Hz
-        CVEP Pipeline: [6, 30] Hz
-    4. Epoch the Raw Data
-    5. Downsample: From 500 Hz to 120 Hz
+* **Gaze**: fixed central cross
+* **Stimuli**: two 3°-diameter circles at ±2.1° eccentricity
 
-## Experiment Structure
+  * Background: 126-bit Gold codes at 60 Hz (short/long flashes)
+  * Foreground: 4 Hz shape stream (magenta hourglass = target)
+* **Trial** (20 s): 80 flashes per side (30 ms each)
+* **Task**: attend covertly to cued side and count targets
 
-    Participants maintained a fixed gaze at the center of a screen while stimuli were presented simultaneously on the left and right sides. The details of the experimental design are as follows:
+---
 
-        Stimulus Details:
-            Stimuli on each side can be either targets or non-targets.
-            Participants were instructed to attend to one side and count the number of stimuli presented.
-        Trial Structure:
-            Duration: 20 seconds per trial.
-            Stimulus Presentation: 80 stimuli per side per trial (each stimulus lasts 30 ms).
+## 4. Data Format
 
-## Data Format
+* **EEG** `X`: 80 trials × 80 epochs × n\_channels × time
+* **Stimulus codes** `Z`: 80 trials × 80 epochs × 2 sides
+* **Labels** `y`: 80 trials (attended side)
 
-    EEG Data X:
-    80 Trials x 80 Epochs x n_channels x time
+---
 
-    Stimulus Coding Array z:
-    80 Trials x 80 Epochs x 2
-    (Each trial contains a stimulus code for each side)
+## 5. c-VEP Pipeline
 
-    Attended Side Label y:
-    80 Trials x 1
-    (Indicates the side on which the participant was instructed to attend)
+**Goal:** identify the attended pseudo-random flash stream via reconvolution CCA.
 
+1. **Filter** 6–30 Hz, **epoch** 0–20 s, **downsample** to 120 Hz.
+2. **Build** event matrix for each trial:
 
-## CVEP Pipeline
-[insert]
-## Alpha Pipeline
+   * Trial onset
+   * Short flashes (16.7 ms)
+   * Long flashes (33.3 ms)
+3. **Structure matrix**: tile each event over a 300 ms response window.
+4. **Calibration** (CCA):
 
-    The alpha pipeline is based on the neural marker of alpha band suppression following visual attention.
-    Key Points
+   * Stack EEG trials $S ∈ ℝ^{C×T}$ and structure matrices $D ∈ ℝ^{L×T}$
+   * Solve
 
-        Neural Basis:
-            Stimuli in the left visual field are processed contralaterally (right visual cortex) and vice versa.
-            Attending to a stimulus results in alpha band suppression in the contralateral hemisphere.
+     $$
+       \arg\max_{w,r} \mathrm{corr}(w^T S,\,r^T D)
+     $$
 
-    Decoding Strategy
+     where $w$ is the spatial filter and $r$ the transient-response template.
+5. **Inference**: for each candidate code $M_i$, pick
 
-        Channel Selection:
-            Method 1: Use a simple sub-selection of electrodes (e.g., occipital electrodes).
-            Method 2: Apply Common Spatial Patterns (CSP) to derive virtual channels that maximize variance between conditions.
-        Feature Extraction:
-            Compute the log-mean alpha band envelope using the Hilbert transform.
-            Use the computed envelope as a feature input to the LDA classifier.
-        Performance Assessment:
-            Subject-resolved decoding performance.
-            A decoding curve is generated by varying the time window used to compute the feature vector.
+   $$
+     \hat{y} = \arg\max_i \mathrm{corr}(w^T X,\,r^T M_i)
+   $$
 
-## P300 Pipeline
+   as the attended side.
 
-    The P300 pipeline uses ERP components to differentiate between target and non-target presentations.
-    Key Points
+---
 
-        ERP Components:
-        Target stimuli elicit an ERP complex featuring prominent P100 and P300 components.
+## 6. Alpha-Band Pipeline
 
-        Decoding Strategy:
-            Epoch-level Decoding:
-            Apply Linear Discriminant Analysis (LDA) on epochs time-locked to stimulus onset.
-            Trial-level Inference:
-            Correlate LDA classification outcomes with the event matrix for both sides.
-            The side with the highest correlation (i.e., where target was both presented and decoded) is identified as the attended side.
+**Goal:** exploit contralateral alpha suppression (8–13 Hz) under covert attention.
 
-        Performance Assessment:
-            Subject-resolved decoding with full trial integration.
-            A decoding curve is generated by varying the number of stimulus presentations included in the correlation-based decision rule.
+1. **Filter** 8–13 Hz, **epoch** 0–20 s, **downsample** to 120 Hz.
+2. **Spatial filtering** (CSP): compute six filters—three maximizing and three minimizing variance between left/right attention.
+3. **Feature extraction**: Hilbert envelope → log transform → time average → 6-D vector.
+4. **Classification**: shrinkage LDA (Ledoit–Wolf) on trial-level features.
 
+---
+
+## 7. P300 ERP Pipeline
+
+**Goal:** detect the infrequent magenta-hourglass ERP on the attended side.
+
+1. **Filter** 0.5–8 Hz, **epoch** 0–20 s, **downsample** to 120 Hz.
+2. **Segment** into 80 epochs per trial (−200 ms … +700 ms around each shape).
+3. **Spatiotemporal features**: mean amplitude in six windows (50–120, 121–200, …, 531–700 ms) × C channels → `6C`-D.
+4. **Epoch-level**: block-Toeplitz LDA for target/non-target classification.
+5. **Trial-level**: correlate epoch scores with left/right target sequences; choose side with higher correlation.
+
+---
+
+## 8. Performance Summary
+
+| Strategy             | 5 s    | 10 s   | 15 s   | 20 s   |
+| -------------------- | ------ | ------ | ------ | ------ |
+| **c-VEP** (with ICA) | 59.9 % | 63.4 % | 65.7 % | 67.1 % |
+| **Alpha** (with ICA) | 74.6 % | 82.5 % | 86.8 % | 87.5 % |
+| **P300** (with ICA)  | 89.0 % | 95.6 % | 97.6 % | 98.1 % |
+
+> *Note: ICA had minimal impact on all pipelines.*
+
+---
+
+## 9. Discussion & Next Steps
+
+* **P300**: fastest, **alpha**: intermediate, **c-VEP**: slower/plateauing
+* **Inter-subject variability** suggests future hybrid decoding of c-VEP + alpha + P300
+* **c-VEP improvements**: optimize code sequences, stimulus parameters (size, eccentricity), or invisible stimulation
+* **Hybrid architectures** may maximize robustness for diverse neural profiles
+
+---
+
+## 10. References
+
+1. Treder & Blankertz (2010). Covert Attention in ERP-BCI. *Behavioral and Brain Functions*.
+2. Treder et al. (2011). Alpha lateralization & covert shifts. *Journal of NeuroEngineering and Rehabilitation*.
+3. Narayanan et al. (2024). Pilot gaze-independent c-VEP BCI. *Graz BCI Conference*.
+4. Thielen et al. (2021). Reconvolution CCA for c-VEP. *Journal of Neural Engineering*.
+5. Sosulski & Tangermann (2022). Block-Toeplitz LDA. *Journal of Neural Engineering*.
