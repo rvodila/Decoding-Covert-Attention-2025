@@ -101,15 +101,10 @@ subjects_channel_reject = {
 4. **Calibration** (CCA):
 
    * Stack EEG trials $S ∈ ℝ^{C×T}$ and structure matrices $D ∈ ℝ^{L×T}$
-   * Solve
-
-     $\arg\max_{w,r} \mathrm{corr}(w^T S,r^T D)$
-     
+   * Solve $\arg\max_{w,r} \mathrm{corr}(w^T S,r^T D)$
 
      where $w$ is the spatial filter and $r$ the transient-response template.
-5. **Inference**: for each candidate code $M_i$, pick
-
-   $\hat{y} = \arg\max_i \mathrm{corr}(w^T X,r^T M_i)$
+5. **Inference**: for each candidate code $M_i$, pick $\hat{y} = \arg\max_i \mathrm{corr}(w^T X,r^T M_i)$
 
    as the attended side.
 
