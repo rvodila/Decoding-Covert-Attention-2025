@@ -108,7 +108,7 @@ For new EEG data:
 
    * Apply the spatial filter to get a single response signal
    * Compare that signal to each learned template
-   > Pick the template with the highest match—that tells you which side was attended.
+   * Pick the template with the highest match—that tells you which side was attended.
 
 ---
 
