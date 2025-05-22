@@ -1,4 +1,3 @@
-````markdown
 # Decoding Lateral Attention Shifts in a Fixed-Gaze Task Using Three Strategies
 
 ## Abstract
@@ -15,7 +14,7 @@ Grand-average accuracies reached 67 % (c-VEP), 88 % (alpha) and 98 % (P300), dem
 ## 1. Noisy-Channel Rejection
 Certain electrodes were discarded per subject due to irreparable noise.  
 
-```python
+````` python
 subjects_channel_reject = {
   'VPpdia': ['POz','P2'],
   'VPpdib': ['P2','FC1','CP2'],
@@ -49,7 +48,7 @@ subjects_channel_reject = {
 }
 ````
 
-* See **analysis/raw/Rejection Map/** for topographies and PSDs.
+* See **analysis/raw/Rejection Map/** for a birds-eye view of noisy epochs across channels.
 * Timeseries and PSDs are in **analysis/raw/timeseries/** and **analysis/raw/psd/**.
 
 ---
