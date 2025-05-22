@@ -46,7 +46,7 @@ subjects_channel_reject = {
   'VPpdizb': ['Fz'],
   'VPpdizc': ['P1','PO3','POz','Pz','P2','FC2']
 }
-````
+`````
 
 * See **analysis/raw/Rejection Map/** for a birds-eye view of noisy epochs across channels.
 * Timeseries and PSDs are in **analysis/raw/timeseries/** and **analysis/raw/psd/**.
@@ -62,7 +62,7 @@ subjects_channel_reject = {
    * c-VEP: 6–30 Hz
    * Alpha: 0.5–30 Hz
    * P300: 0.5–8 Hz
-4. **Epoch** around stimulation
+4. **Epoch** around stimulus onset
 5. **Downsample** 500 Hz → 120 Hz
 
 ---
