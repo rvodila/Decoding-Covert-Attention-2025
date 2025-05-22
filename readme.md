@@ -98,15 +98,17 @@ subjects_channel_reject = {
    * Short flashes (16.7 ms)
    * Long flashes (33.3 ms)
 3. **Structure matrix**: tile each event over a 300 ms response window.
-4. **Calibration** (CCA):
+4. **Calibration (training)**:
+   Use recorded trials with known flash codes to run CCA, which learns:
+   * a spatial filter that combines channels to best capture the flash response
+   * a template waveform that represents the typical brain response
 
-   * Stack EEG trials $S ∈ ℝ^{C×T}$ and structure matrices $D ∈ ℝ^{L×T}$
-   * Solve $\arg\max_{w,r} \mathrm{corr}(w^T S,r^T D)$
+5. **Inference (testing)**
+For new EEG data:
 
-     where $w$ is the spatial filter and $r$ the transient-response template.
-5. **Inference**: for each candidate code $M_i$, pick $\hat{y} = \arg\max_i \mathrm{corr}(w^T X,r^T M_i)$
-
-   as the attended side.
+   * Apply the spatial filter to get a single response signal
+   * Compare that signal to each learned template
+   > Pick the template with the highest match—that tells you which side was attended.
 
 ---
 
